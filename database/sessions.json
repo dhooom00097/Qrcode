@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1763416475724,
+    "pin": "554100",
+    "teacherId": 1,
+    "sessionName": "math",
+    "location": {
+      "latitude": 27.536456914110797,
+      "longitude": 41.684642776013405
+    },
+    "createdAt": "2025-11-17T21:54:35.725Z",
+    "isOpen": true,
+    "attendanceCount": 1
+  }
+]

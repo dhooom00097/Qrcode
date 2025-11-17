@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل حضور طالب</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">📚</div>
+                <h1>تسجيل حضور طالب</h1>
+                <p>امسح QR Code أو أدخل رقم الجلسة</p>
+            </div>
+
+            <!-- QR Scanner -->
+            <div id="qr-scanner-section" style="display: none;">
+                <div id="qr-reader" style="width: 100%; margin-bottom: 20px;"></div>
+                <button type="button" class="btn btn-secondary" onclick="stopScanner()">
+                    <span>إلغاء المسح</span>
+                </button>
+            </div>
+
+            <!-- Manual Form -->
+            <div id="manual-form-section">
+                <button type="button" class="btn btn-primary" onclick="startScanner()" style="margin-bottom: 20px;">
+                    <span>📷 مسح QR Code</span>
+                </button>
+
+                <div class="divider"><span>أو أدخل البيانات يدوياً</span></div>
+
+                <form id="attendanceForm" class="login-form">
+                    <div id="alert"></div>
+                    <div class="form-group">
+                        <label for="session-pin">رقم الجلسة (PIN)</label>
+                        <input type="text" id="session-pin" maxlength="6" required placeholder="000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-name">الاسم الكامل</label>
+                        <input type="text" id="student-name" required placeholder="أدخل اسمك الكامل">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-id">الرقم الجامعي</label>
+                        <input type="text" id="student-id" required placeholder="أدخل رقمك الجامعي">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span>تسجيل الحضور</span>
+                    </button>
+                </form>
+
+                <div class="divider"><span>أو</span></div>
+                <a href="index.html" class="btn btn-secondary"><span>تسجيل دخول المعلم</span></a>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let html5QrCode = null;
+        let isScanning = false;
+
+        // QR Scanner Functions
+        async function startScanner() {
+            const scannerSection = document.getElementById('qr-scanner-section');
+            const formSection = document.getElementById('manual-form-section');
+            
+            scannerSection.style.display = 'block';
+            formSection.style.display = 'none';
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("qr-reader");
+            }
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    },
+                    (decodedText) => {
+                        onScanSuccess(decodedText);
+                    },
+                    (errorMessage) => {
+                        // Ignore scan errors
+                    }
+                );
+                isScanning = true;
+            } catch (err) {
+                console.error('Error starting scanner:', err);
+                showAlert('error', 'خطأ في تشغيل الكاميرا. تأكد من السماح للوصول إلى الكاميرا');
+                stopScanner();
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode && isScanning) {
+                try {
+                    await html5QrCode.stop();
+                    isScanning = false;
+                } catch (err) {
+                    console.error('Error stopping scanner:', err);
+                }
+            }
+
+            document.getElementById('qr-scanner-section').style.display = 'none';
+            document.getElementById('manual-form-section').style.display = 'block';
+        }
+
+        async function onScanSuccess(decodedText) {
+            await stopScanner();
+            
+            // Extract PIN from QR code
+            const pin = decodedText.trim();
+            
+            if (pin && pin.length === 6) {
+                document.getElementById('session-pin').value = pin;
+                showAlert('success', 'تم مسح الرمز بنجاح! أدخل بياناتك الآن');
+                
+                // Focus on name input
+                setTimeout(() => {
+                    document.getElementById('student-name').focus();
+                }, 500);
+            } else {
+                showAlert('error', 'رمز QR غير صحيح');
+            }
+        }
+
+        // Form Submission
+        document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pin = document.getElementById('session-pin').value;
+            const name = document.getElementById('student-name').value;
+            const studentId = document.getElementById('student-id').value;
+            const btn = document.getElementById('submitBtn');
+            
+            btn.disabled = true;
+            btn.querySelector('span').textContent = 'جاري التسجيل...';
+
+            try {
+                const location = await getLocation();
+                const response = await fetch(`${API_URL}/attendance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        sessionPin: pin, 
+                        studentName: name, 
+                        studentId: studentId, 
+                        location: location 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('success', '✓ تم تسجيل حضورك بنجاح!');
+                    document.getElementById('attendanceForm').reset();
+                } else {
+                    showAlert('error', data.message);
+                }
+            } catch (error) {
+                showAlert('error', 'خطأ في الاتصال بالخادم');
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('span').textContent = 'تسجيل الحضور';
+            }
+        });
+
+        function getLocation() {
+            return new Promise((resolve) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => resolve({ 
+                            latitude: position.coords.latitude, 
+                            longitude: position.coords.longitude 
+                        }),
+                        () => resolve(null)
+                    );
+                } else {
+                    resolve(null);
+                }
+            });
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.getElementById('alert');
+            const className = type === 'success' ? 'alert-success' : 'alert-error';
+            alertDiv.innerHTML = `<div class="alert ${className}">${message}</div>`;
+            
+            // Scroll to alert
+            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            setTimeout(() => alertDiv.innerHTML = '', 5000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop();
+            }
+        });
+    </script>
+</body>
+</html>
