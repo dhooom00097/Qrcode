@@ -172,6 +172,15 @@
 
             try {
                 const location = await getLocation();
+                
+                // ✅ التحقق من الموقع - إجباري!
+                if (!location) {
+                    showAlert('error', '❌ يجب السماح بالوصول للموقع لتسجيل الحضور');
+                    btn.disabled = false;
+                    btn.querySelector('span').textContent = 'تسجيل الحضور';
+                    return;
+                }
+                
                 const response = await fetch(`${API_URL}/attendance`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -202,12 +211,23 @@
         function getLocation() {
             return new Promise((resolve) => {
                 if (navigator.geolocation) {
+                    // إعطاء timeout 5 ثواني فقط
+                    const timeoutId = setTimeout(() => {
+                        resolve(null);
+                    }, 5000);
+                    
                     navigator.geolocation.getCurrentPosition(
-                        (position) => resolve({ 
-                            latitude: position.coords.latitude, 
-                            longitude: position.coords.longitude 
-                        }),
-                        () => resolve(null)
+                        (position) => {
+                            clearTimeout(timeoutId);
+                            resolve({ 
+                                latitude: position.coords.latitude, 
+                                longitude: position.coords.longitude 
+                            });
+                        },
+                        () => {
+                            clearTimeout(timeoutId);
+                            resolve(null); // رفض الموقع = تسجيل بدون موقع
+                        }
                     );
                 } else {
                     resolve(null);
