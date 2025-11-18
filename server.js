@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -273,11 +274,15 @@ app.put('/api/attendance/:id', (req, res) => {
     }
 });
 
+// ✅ QR Code Generator - يولد رابط كامل
 app.get('/api/qrcode/:pin', async (req, res) => {
     const { pin } = req.params;
     
     try {
-        const qrCodeDataURL = await QRCode.toDataURL(pin, {
+        // توليد QR Code برابط كامل بدلاً من رقم فقط
+        const studentURL = `https://qrstudent.netlify.app/student.html?pin=${pin}`;
+        
+        const qrCodeDataURL = await QRCode.toDataURL(studentURL, {
             width: 300,
             margin: 2,
             color: { dark: '#2563eb', light: '#ffffff' }
@@ -324,12 +329,10 @@ app.post('/api/change-password', (req, res) => {
         return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
     }
     
-    // التحقق من كلمة السر القديمة
     if (!bcrypt.compareSync(oldPassword, users[userIndex].password)) {
         return res.status(401).json({ success: false, message: 'كلمة السر القديمة غير صحيحة' });
     }
     
-    // تشفير كلمة السر الجديدة
     const hashedPassword = bcrypt.hashSync(newPassword, 10);
     users[userIndex].password = hashedPassword;
     
@@ -343,7 +346,6 @@ app.post('/api/users', (req, res) => {
     const { username, password, name, role } = req.body;
     const users = readJSON(USERS_FILE);
     
-    // التحقق من عدم تكرار اسم المستخدم
     if (users.find(u => u.username === username)) {
         return res.status(409).json({ success: false, message: 'اسم المستخدم موجود مسبقاً' });
     }

@@ -63,6 +63,18 @@
         let html5QrCode = null;
         let isScanning = false;
 
+        // ✅ التحقق من وجود PIN في الرابط عند تحميل الصفحة
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const pinFromURL = urlParams.get('pin');
+            
+            if (pinFromURL && pinFromURL.length === 6) {
+                document.getElementById('session-pin').value = pinFromURL;
+                showAlert('success', 'تم تحميل رقم الجلسة! أدخل بياناتك الآن');
+                document.getElementById('student-name').focus();
+            }
+        });
+
         // QR Scanner Functions
         async function startScanner() {
             const scannerSection = document.getElementById('qr-scanner-section');
@@ -115,7 +127,23 @@
         async function onScanSuccess(decodedText) {
             await stopScanner();
             
-            // Extract PIN from QR code
+            // ✅ التحقق إذا كان QR Code يحتوي على رابط كامل
+            try {
+                const url = new URL(decodedText);
+                const pin = url.searchParams.get('pin');
+                if (pin && pin.length === 6) {
+                    document.getElementById('session-pin').value = pin;
+                    showAlert('success', 'تم مسح الرمز بنجاح! أدخل بياناتك الآن');
+                    setTimeout(() => {
+                        document.getElementById('student-name').focus();
+                    }, 500);
+                    return;
+                }
+            } catch (e) {
+                // ليس رابط، جرب كرقم عادي
+            }
+            
+            // Extract PIN from QR code (الطريقة القديمة للتوافق)
             const pin = decodedText.trim();
             
             if (pin && pin.length === 6) {
