@@ -6,8 +6,7 @@ const API_CONFIG = {
     LOCAL: 'http://localhost:3000/api',
     
     // للإنتاج (Production) - رابط Railway
-    PRODUCTION: 'https://qrcode-production-c4e9.up.railway.app/api',
-    
+PRODUCTION: 'https://qrcode-2omo.onrender.com/api',    
     // تحديد البيئة الحالية - معدل للإنتاج
     CURRENT: 'PRODUCTION'  // ✅ الآن يستخدم Railway
 };
