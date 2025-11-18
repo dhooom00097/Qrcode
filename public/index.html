@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - نظام الحضور</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- ✅ إضافة ملف الإعدادات -->
+    <script src="config.js"></script>
 </head>
 <body class="login-page">
     <div class="login-container">
@@ -84,7 +86,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        // ✅ API_URL يأتي الآن من ملف config.js
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();

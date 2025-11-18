@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم - نظام الحضور</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- ✅ إضافة ملف الإعدادات -->
+    <script src="config.js"></script>
 </head>
 <body class="dashboard">
     <div class="dashboard-container">
@@ -176,7 +178,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        // ✅ API_URL يأتي الآن من ملف config.js
         let currentUser = null;
         let sessions = [];
         let currentSession = null;

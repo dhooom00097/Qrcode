@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل حضور طالب</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- ✅ إضافة ملف الإعدادات -->
+    <script src="config.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="login-page">
@@ -57,7 +59,7 @@
         </div>
     </div>
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        // ✅ API_URL يأتي الآن من ملف config.js
         let html5QrCode = null;
         let isScanning = false;
 
